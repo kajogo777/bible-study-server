@@ -5,10 +5,8 @@ services:
   #   image: postgres
   web:
     build: .
-    command: python /code/manage.py runserver 0.0.0.0:8000
-    volumes:
-      - .:/code
+    command: python manage.py runserver 0.0.0.0:8000
     ports:
-      - "8000:8000"
+      - "80:8000"
     # depends_on:
     #   - db
