@@ -7,5 +7,7 @@ services:
     build: .
     ports:
       - "80:8000"
+    volumes:
+      - ./db:/code/db
     # depends_on:
     #   - db
