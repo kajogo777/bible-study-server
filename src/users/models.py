@@ -2,6 +2,7 @@ from django.db import models
 from django.utils.crypto import get_random_string
 from challenges.models import Challenge, Answer
 from smart_selects.db_fields import ChainedForeignKey
+from django.contrib.auth.models import AbstractUser
 
 
 def generate_code():
@@ -16,9 +17,18 @@ class Group(models.Model):
         return "{}".format(self.name)
 
 
+class AdminUser(AbstractUser):
+    service_group = models.ForeignKey(
+        'users.Group', on_delete=models.PROTECT, blank=True, null=True, related_name='service_group')
+
+    class Meta:
+        verbose_name = 'Admin User'
+        verbose_name_plural = 'Admin Users'
+
+
 class User(models.Model):
     group = models.ForeignKey(
-        'users.Group', on_delete=models.PROTECT, blank=False, null=False)
+        'users.Group', on_delete=models.PROTECT, blank=False, null=False, related_name='user_group')
     name = models.CharField(max_length=50, blank=False, null=False)
     date_of_birth = models.DateField(
         auto_now=False, auto_now_add=False, blank=False, null=False)

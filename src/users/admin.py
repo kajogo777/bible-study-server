@@ -6,10 +6,28 @@ from django.utils.html import format_html
 from django.urls import reverse
 from django.conf.urls import url
 from reportlab.pdfgen import canvas
-from reportlab.graphics.barcode.qr import QrCodeWidget 
-from reportlab.graphics.shapes import Drawing 
+from reportlab.graphics.barcode.qr import QrCodeWidget
+from reportlab.graphics.shapes import Drawing
 from reportlab.graphics import renderPDF
 from reportlab.platypus import SimpleDocTemplate, Spacer, Paragraph
+from django.contrib.auth.admin import UserAdmin
+from .forms import AdminUserCreationForm, AdminUserChangeForm
+from .models import AdminUser
+from django import forms
+
+
+class AdminUserAdmin(UserAdmin):
+    add_form = AdminUserCreationForm
+    form = AdminUserChangeForm
+    model = AdminUser
+
+    list_display = ('username', 'is_staff', 'is_superuser', 'service_group',)
+    list_filter = ('service_group',)
+    add_fieldsets = ((None, {'classes': ('wide',), 'fields': (
+        'username', 'password1', 'password2', 'service_group')}),)
+    fieldsets = ((None, {'fields': ('username', 'password', 'service_group')}), ('Personal info', {'fields': ('first_name', 'last_name',)}), ('Permissions', {
+                 'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}), ('Important dates', {'fields': ('last_login', 'date_joined')}))
+
 
 class GroupAdmin(admin.ModelAdmin):
     list_display = ('name', 'downloads')
@@ -17,7 +35,7 @@ class GroupAdmin(admin.ModelAdmin):
     def get_urls(self):
         urls = super(GroupAdmin, self).get_urls()
         urls += [
-            url(r'^download-file/(?P<pk>\d+)$', self.download_pdf, 
+            url(r'^download-file/(?P<pk>\d+)$', self.download_pdf,
                 name='applabel_modelname_download-file'),
         ]
         return urls
@@ -44,12 +62,13 @@ class GroupAdmin(admin.ModelAdmin):
             margin = 50
 
             for i, user in enumerate(users):
-                qrw = QrCodeWidget(user.code) 
+                qrw = QrCodeWidget(user.code)
 
                 d = Drawing(50, 50)
                 d.add(qrw)
                 renderPDF.draw(d, p, margin + x_offset, margin + y_offset)
-                p.drawString(margin + x_offset, margin + y_offset - 10, user.name)
+                p.drawString(margin + x_offset, margin +
+                             y_offset - 10, user.name)
 
                 y_offset += step
 
@@ -73,16 +92,45 @@ class ResponseInline(admin.TabularInline):
     extra = 0
     min_num = 0
 
-class UserAdmin(admin.ModelAdmin):
+
+class RegularUserForm(forms.ModelForm):
+    def clean_group(self):
+        if self.user.service_group is not None and self.user.service_group != self.cleaned_data["group"]:
+            raise forms.ValidationError(
+                "You can only add users to group {}".format(self.user.service_group.name))
+        return self.cleaned_data["group"]
+
+
+class RegularUserAdmin(admin.ModelAdmin):
     list_display = ('name', 'date_of_birth', 'gender', 'code')
     list_filter = (
         'date_of_birth',
-        'gender'
     )
     inlines = [
         ResponseInline,
     ]
+    form = RegularUserForm
+
+    def get_form(self, request, *args, **kwargs):
+        form = super(RegularUserAdmin, self).get_form(request, *args, **kwargs)
+        form.user = request.user
+        return form
+
+    def get_queryset(self, request):
+        qs = super(RegularUserAdmin, self).get_queryset(request)
+        if request.user.service_group is None:
+            return qs
+        return qs.filter(group=request.user.service_group)
+
+    # def save_model(self, request, obj, form, change):
+    #     if request.user.service_group is None or request.user.service_group == obj.group:
+    #         super().save_model(request, obj, form, change)
+    #     else:
+    #         raise form.ValidationError(
+    #             "You cannot add a user to another group")
+
 
 # Register your models here.
 admin.site.register(Group, GroupAdmin)
-admin.site.register(User, UserAdmin)
+admin.site.register(User, RegularUserAdmin)
+admin.site.register(AdminUser, AdminUserAdmin)
