@@ -167,13 +167,6 @@ class RegularUserAdmin(admin.ModelAdmin):
             return qs
         return qs.filter(group=request.user.service_group)
 
-    # def save_model(self, request, obj, form, change):
-    #     if request.user.service_group is None or request.user.service_group == obj.group:
-    #         super().save_model(request, obj, form, change)
-    #     else:
-    #         raise form.ValidationError(
-    #             "You cannot add a user to another group")
-
 
 # Register your models here.
 admin.site.register(Group, GroupAdmin)
