@@ -12,7 +12,7 @@ from reportlab.graphics import renderPDF
 from reportlab.platypus import SimpleDocTemplate, Spacer, Paragraph
 from django.contrib.auth.admin import UserAdmin
 from .forms import AdminUserCreationForm, AdminUserChangeForm
-from .models import AdminUser
+from .models import AdminUser, Class
 from django import forms
 
 
@@ -21,17 +21,25 @@ class AdminUserAdmin(UserAdmin):
     form = AdminUserChangeForm
     model = AdminUser
 
-    list_display = ('username', 'is_staff', 'is_superuser', 'service_group',)
-    list_filter = ('service_group',)
+    list_display = ('username', 'is_staff', 'is_superuser',
+                    'service_group', 'service_class')
+    list_filter = ('service_group', 'service_class')
     add_fieldsets = ((None, {'classes': ('wide',), 'fields': (
         'username', 'password1', 'password2', 'service_group')}),)
-    fieldsets = ((None, {'fields': ('username', 'password', 'service_group')}), ('Personal info', {'fields': ('first_name', 'last_name',)}), ('Permissions', {
+    fieldsets = ((None, {'fields': ('username', 'password', 'service_group', 'service_class')}), ('Personal info', {'fields': ('first_name', 'last_name',)}), ('Permissions', {
                  'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}), ('Important dates', {'fields': ('last_login', 'date_joined')}))
+
+
+class ClassInline(admin.TabularInline):
+    model = Class
 
 
 class GroupAdmin(admin.ModelAdmin):
     list_display = ('name',)  # 'downloads')
 
+    inlines = [
+        ClassInline,
+    ]
     # def get_urls(self):
     #     urls = super(GroupAdmin, self).get_urls()
     #     urls += [
@@ -143,12 +151,20 @@ class RegularUserForm(forms.ModelForm):
                 "You can only add users to group {}".format(self.user.service_group.name))
         return self.cleaned_data["group"]
 
+    def clean_group_class(self):
+        if self.user.service_class is not None and self.user.service_class != self.cleaned_data["group_class"]:
+            raise forms.ValidationError(
+                "You can only add users to class {}".format(self.user.service_class))
+        return self.cleaned_data["group_class"]
+
 
 class RegularUserAdmin(admin.ModelAdmin):
-    list_display = ('name', 'date_of_birth', 'gender', 'group', 'code')
+    list_display = ('name', 'date_of_birth', 'gender',
+                    'group', 'group_class', 'code')
     list_filter = (
         'date_of_birth',
-        'group'
+        'group',
+        'group_class',
     )
     inlines = [
         ResponseInline,
@@ -163,9 +179,11 @@ class RegularUserAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         qs = super(RegularUserAdmin, self).get_queryset(request)
-        if request.user.service_group is None:
-            return qs
-        return qs.filter(group=request.user.service_group)
+        if request.user.service_group is not None:
+            qs = qs.filter(group=request.user.service_group)
+        if request.user.service_class is not None:
+            qs = qs.filter(group_class=request.user.service_class)
+        return qs
 
 
 # Register your models here.
