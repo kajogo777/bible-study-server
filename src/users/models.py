@@ -26,6 +26,9 @@ class Class(models.Model):
             (1, 1),
             (2, 2),
             (3, 3),
+            (4, 4),
+            (5, 5),
+            (6, 6),
         ],
         blank=False, null=False
     )
@@ -48,6 +51,9 @@ class Class(models.Model):
 
     def __str__(self):
         return "{}{}".format(self.grade, self.letter)
+
+    class Meta:
+        unique_together = [['group', 'grade', 'letter']]
 
 
 class AdminUser(AbstractUser):
