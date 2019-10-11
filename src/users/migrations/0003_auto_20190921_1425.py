@@ -13,7 +13,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='class',
             name='grade',
-            field=models.IntegerField(choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5), (6, 6)]),
+            field=models.IntegerField(
+                choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5), (6, 6)]),
         ),
         migrations.AlterUniqueTogether(
             name='class',

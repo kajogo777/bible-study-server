@@ -32,28 +32,14 @@ class Class(models.Model):
         ],
         blank=False, null=False
     )
-    letter = models.CharField(
-        max_length=1,
-        choices=[
-            ('A', 'A'),
-            ('B', 'B'),
-            ('C', 'C'),
-            ('D', 'D'),
-            ('E', 'E'),
-            ('F', 'F'),
-            ('G', 'G'),
-            ('H', 'H'),
-            ('I', 'I'),
-            ('J', 'J'),
-        ],
+    name = models.CharField(
+        max_length=30,
+        default="",
         blank=False, null=False
     )
 
     def __str__(self):
-        return "{}{}".format(self.grade, self.letter)
-
-    class Meta:
-        unique_together = [['group', 'grade', 'letter']]
+        return "{} {}".format(self.grade, self.name)
 
 
 class AdminUser(AbstractUser):
