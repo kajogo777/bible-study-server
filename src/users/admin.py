@@ -14,6 +14,8 @@ from django.contrib.auth.admin import UserAdmin
 from .forms import AdminUserCreationForm, AdminUserChangeForm
 from .models import AdminUser, Class
 from django import forms
+from django.utils import timezone
+from challenges.models import Challenge
 
 
 class AdminUserAdmin(UserAdmin):
@@ -190,10 +192,9 @@ class RegularUserForm(forms.ModelForm):
 
 
 class RegularUserAdmin(admin.ModelAdmin):
-    list_display = ('name', 'date_of_birth', 'gender',
-                    'group', 'group_class', 'code')
+    list_display = ('name', 'group', 'group_class', 'get_solved',
+                    'get_read', 'date_of_birth', 'gender')
     list_filter = (
-        'date_of_birth',
         'group',
         'group_class',
     )
@@ -219,6 +220,23 @@ class RegularUserAdmin(admin.ModelAdmin):
         if request.user.service_class is not None:
             qs = qs.filter(group_class=request.user.service_class)
         return qs
+
+    def get_solved(self, obj):
+        today = timezone.localtime(timezone.now()).date()
+        total = Challenge.objects.filter(
+            group=obj.group, active_date__lte=today).count()
+        correct_answers = obj.response_set.filter(
+            answer__correct=True).count()
+        return '{}/{} ({:.2f} %)'.format(correct_answers, total, correct_answers/total*100)
+    get_solved.short_description = 'Solved'
+
+    def get_read(self, obj):
+        today = timezone.localtime(timezone.now()).date()
+        total = Challenge.objects.filter(
+            group=obj.group, active_date__lte=today).count()
+        all_answers = obj.response_set.count()
+        return '{}/{} ({:.2f} %)'.format(all_answers, total, all_answers/total*100)
+    get_read.short_description = 'Read'
 
 
 # Register your models here.
