@@ -92,6 +92,8 @@ class ChallengeAdmin(admin.ModelAdmin):
         form = super(ChallengeAdmin, self).get_form(
             request, *args, **kwargs)
         form.user = request.user
+        if request.user.service_group is not None:
+            form.base_fields['group'].initial = request.user.service_group
         return form
 
     def get_queryset(self, request):

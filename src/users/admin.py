@@ -175,6 +175,10 @@ class RegularUserAdmin(admin.ModelAdmin):
     def get_form(self, request, *args, **kwargs):
         form = super(RegularUserAdmin, self).get_form(request, *args, **kwargs)
         form.user = request.user
+        if request.user.service_group is not None:
+            form.base_fields['group'].initial = request.user.service_group
+            if request.user.service_class is not None:
+                form.base_fields['group_class'].initial = request.user.service_class
         return form
 
     def get_queryset(self, request):
