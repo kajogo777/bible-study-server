@@ -39,7 +39,7 @@ class Class(models.Model):
     )
 
     def __str__(self):
-        return "{} {}".format(self.grade, self.name)
+        return "{}: {} {}".format(self.group, self.grade, self.name)
 
 
 class AdminUser(AbstractUser):
