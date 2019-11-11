@@ -24,10 +24,41 @@ class AdminUserAdmin(UserAdmin):
     list_display = ('username', 'is_staff', 'is_superuser',
                     'service_group', 'service_class')
     list_filter = ('service_group', 'service_class')
-    add_fieldsets = ((None, {'classes': ('wide',), 'fields': (
-        'username', 'password1', 'password2', 'service_group')}),)
-    fieldsets = ((None, {'fields': ('username', 'password', 'service_group', 'service_class')}), ('Personal info', {'fields': ('first_name', 'last_name',)}), ('Permissions', {
-                 'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}), ('Important dates', {'fields': ('last_login', 'date_joined')}))
+    add_fieldsets = (
+        (None,
+            {
+                'classes': ('wide',),
+                'fields': ('username', 'password1', 'password2', 'service_group', 'service_class', 'is_staff', 'groups')
+            }
+         ),
+    )
+    fieldsets = (
+        (None,
+            {
+                'fields': ('username', 'password', 'service_group', 'service_class')
+            }
+         ),
+        ('Personal info',
+            {
+                'fields': ('first_name', 'last_name',)
+            }
+         ),
+        ('Permissions',
+            {
+                'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')
+            }
+         ),
+        ('Important dates',
+            {
+                'fields': ('last_login', 'date_joined')
+            }
+         )
+    )
+
+    def get_form(self, request, *args, **kwargs):
+        form = super(AdminUserAdmin, self).get_form(request, *args, **kwargs)
+        form.base_fields['is_staff'].initial = True
+        return form
 
 
 class ClassInline(admin.TabularInline):
