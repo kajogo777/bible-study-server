@@ -198,6 +198,9 @@ class RegularUserAdmin(admin.ModelAdmin):
         'group',
         'group_class',
     )
+    search_fields = (
+        'name',
+    )
     inlines = [
         ResponseInline,
     ]
