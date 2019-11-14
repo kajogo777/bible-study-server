@@ -228,6 +228,8 @@ class RegularUserAdmin(admin.ModelAdmin):
         today = timezone.localtime(timezone.now()).date()
         total = Challenge.objects.filter(
             group=obj.group, active_date__lte=today).count()
+        if total == 0:
+            return '-'
         correct_answers = obj.response_set.filter(
             answer__correct=True).count()
         return '{}/{} ({:.2f} %)'.format(correct_answers, total, correct_answers/total*100)
@@ -237,6 +239,8 @@ class RegularUserAdmin(admin.ModelAdmin):
         today = timezone.localtime(timezone.now()).date()
         total = Challenge.objects.filter(
             group=obj.group, active_date__lte=today).count()
+        if total == 0:
+            return '-'
         all_answers = obj.response_set.count()
         return '{}/{} ({:.2f} %)'.format(all_answers, total, all_answers/total*100)
     get_read.short_description = 'Read'
