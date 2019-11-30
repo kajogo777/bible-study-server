@@ -47,15 +47,24 @@ class ChallengeSerializer(serializers.BaseSerializer):
             chapter=challenge.start_verse.chapter, index__gte=challenge.start_verse.index, index__lte=challenge.end_verse.index)
 
         scripture_verse_text = [verse.text for verse in verses]
+        scripture_verse_text_en = [verse.text_en for verse in verses]
         scripture_verse_indexes = [verse.index for verse in verses]
 
         if challenge.start_verse.id == challenge.end_verse.id:
             verse_range = challenge.start_verse.index
+            verse_range_en = challenge.start_verse.index
         else:
-            verse_range = "{}-{}".format(challenge.start_verse.index,
-                                         challenge.end_verse.index)
+            verse_range = "{}-{}".format(
+                challenge.end_verse.index, challenge.start_verse.index
+            )
+            verse_range_en = "{}-{}".format(
+                challenge.start_verse.index, challenge.end_verse.index
+            )
+
         scripture_reference = "{}:{} {}".format(
-            challenge.start_verse.chapter.index, verse_range, challenge.start_verse.chapter.book.name)
+            verse_range, challenge.start_verse.chapter.index, challenge.start_verse.chapter.book.name)
+        scripture_reference_en = "{} {}:{}".format(
+            challenge.start_verse.chapter.book.name_en, challenge.start_verse.chapter.index, verse_range_en)
 
         return {
             'id': challenge.id,
@@ -65,9 +74,12 @@ class ChallengeSerializer(serializers.BaseSerializer):
             'scripture': {
                 'verse_indexes': scripture_verse_indexes,
                 'verse_text': scripture_verse_text,
+                'verse_text_en': scripture_verse_text_en,
                 'chapter': challenge.start_verse.chapter.index,
                 'book': challenge.start_verse.chapter.book.name,
+                'book_en': challenge.start_verse.chapter.book.name_en,
                 'reference': scripture_reference,
+                'reference_en': scripture_reference_en
             },
             'response': response,
             'reward': {
@@ -94,4 +106,8 @@ class ChallengesViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         today = timezone.localtime(timezone.now()).date()
         user = self.request.user
-        return Challenge.objects.filter(group=user.group, active_date__lte=today).order_by('-active_date')
+        return Challenge.objects.filter(
+            group=user.group,
+            active_date__lte=today,
+            # active_date__month__in=[today.month, today.month-1]
+        ).order_by('-active_date')
