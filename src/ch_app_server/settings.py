@@ -30,6 +30,7 @@ ALLOWED_HOSTS = [
     "192.168.43.24",
     "192.168.1.133",
     "192.168.1.145",
+    "10.0.2.2",
     "localhost",
     "evangelion.stmary-rehab.com"
 ]
