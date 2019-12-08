@@ -54,4 +54,7 @@ class Answer(models.Model):
     correct = models.BooleanField(blank=False, null=False, default=False)
 
     def __str__(self):
-        return self.text
+        text = self.text
+        if self.correct:
+            text += " (correct)"
+        return text

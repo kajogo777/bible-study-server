@@ -1,7 +1,7 @@
 from django.contrib import admin
 import io
 from django.http import HttpResponse
-from .models import Group, User, Response
+from .models import Group, User, Response, AdminUser, Class
 from django.utils.html import format_html
 from django.urls import reverse
 from django.conf.urls import url
@@ -12,7 +12,6 @@ from reportlab.graphics import renderPDF
 from reportlab.platypus import SimpleDocTemplate, Spacer, Paragraph
 from django.contrib.auth.admin import UserAdmin
 from .forms import AdminUserCreationForm, AdminUserChangeForm
-from .models import AdminUser, Class
 from django import forms
 from django.utils import timezone
 from challenges.models import Challenge
@@ -133,6 +132,12 @@ class ResponseInline(admin.TabularInline):
     extra = 0
     min_num = 0
 
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "challenge" and request.user.service_group is not None:
+            kwargs["queryset"] = Challenge.objects.filter(
+                group=request.user.service_group)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
 
 def download_pdf(modeladmin, request, queryset):
     if request.user.is_authenticated:
@@ -191,12 +196,48 @@ class RegularUserForm(forms.ModelForm):
         return self.cleaned_data["group_class"]
 
 
+class ClassFilter(admin.SimpleListFilter):
+    title = ("class")
+    parameter_name = "group_class"
+
+    def lookups(self, request, model_admin):
+        user = request.user
+        qs = Class.objects.all()
+        if user.service_group is not None:
+            qs = qs.filter(group=user.service_group)
+        if user.service_class is not None:
+            qs = qs.filter(id=user.service_class.id)
+        return ((obj.id, obj) for obj in qs)
+
+    def queryset(self, request, queryset):
+        if self.value():
+            queryset = queryset.filter(group_class=self.value())
+        return queryset
+
+
+class GroupFilter(admin.SimpleListFilter):
+    title = ("group")
+    parameter_name = "group"
+
+    def lookups(self, request, model_admin):
+        user = request.user
+        qs = Group.objects.all()
+        if user.service_group is not None:
+            qs = qs.filter(id=user.service_group.id)
+        return ((obj.id, obj) for obj in qs)
+
+    def queryset(self, request, queryset):
+        if self.value():
+            queryset = queryset.filter(group=self.value())
+        return queryset
+
+
 class RegularUserAdmin(admin.ModelAdmin):
     list_display = ('name', 'group', 'group_class', 'get_solved',
                     'get_read', 'date_of_birth', 'gender')
     list_filter = (
-        'group',
-        'group_class',
+        GroupFilter,
+        ClassFilter
     )
     search_fields = (
         'name',
@@ -212,8 +253,8 @@ class RegularUserAdmin(admin.ModelAdmin):
         form.user = request.user
         if request.user.service_group is not None:
             form.base_fields['group'].initial = request.user.service_group
-            if request.user.service_class is not None:
-                form.base_fields['group_class'].initial = request.user.service_class
+        if request.user.service_class is not None:
+            form.base_fields['group_class'].initial = request.user.service_class
         return form
 
     def get_queryset(self, request):
@@ -244,6 +285,13 @@ class RegularUserAdmin(admin.ModelAdmin):
         all_answers = obj.response_set.count()
         return '{}/{} ({:.2f} %)'.format(all_answers, total, all_answers/total*100)
     get_read.short_description = 'Read'
+
+    def render_change_form(self, request, context, *args, **kwargs):
+        if request.user.service_group is not None:
+            context['adminform'].form.fields['group'].queryset = Group.objects.filter(
+                id=request.user.service_group.id)
+        # unable to filter class options as well because of chaining field
+        return super(RegularUserAdmin, self).render_change_form(request, context, *args, **kwargs)
 
 
 # Register your models here.

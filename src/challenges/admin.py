@@ -3,6 +3,7 @@ from django import forms
 from django.forms.widgets import TextInput
 from django.forms.models import BaseInlineFormSet
 from .models import Challenge, Answer
+from users.models import Group
 from bible.models import BibleChapter, BibleVerse
 from django.utils.html import format_html
 
@@ -74,11 +75,28 @@ class ChallengeAdminForm(forms.ModelForm):
                 'End verse should be greater than or equal to start verse')
 
 
+class GroupFilter(admin.SimpleListFilter):
+    title = ("group")
+    parameter_name = "group"
+
+    def lookups(self, request, model_admin):
+        user = request.user
+        qs = Group.objects.all()
+        if user.service_group is not None:
+            qs = qs.filter(id=user.service_group.id)
+        return ((obj.id, obj) for obj in qs)
+
+    def queryset(self, request, queryset):
+        if self.value():
+            queryset = queryset.filter(group=self.value())
+        return queryset
+
+
 class ChallengeAdmin(admin.ModelAdmin):
     form = ChallengeAdminForm
     list_display = ('active_date', 'group', 'verse', 'reward')
     list_filter = (
-        ('group__name', custom_titled_filter('group name')),
+        GroupFilter,
         'active_date',
         ('start_verse__chapter__book__name', custom_titled_filter('book name')),
     )
@@ -121,6 +139,12 @@ class ChallengeAdmin(admin.ModelAdmin):
             obj.reward_color,
             obj.reward_name,
         )
+
+    def render_change_form(self, request, context, *args, **kwargs):
+        if request.user.service_group is not None:
+            context['adminform'].form.fields['group'].queryset = Group.objects.filter(
+                id=request.user.service_group.id)
+        return super(ChallengeAdmin, self).render_change_form(request, context, *args, **kwargs)
 
 
 admin.site.site_header = 'Evangelion Administration'
