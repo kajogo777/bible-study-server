@@ -90,8 +90,8 @@ class ChallengeSerializer(serializers.BaseSerializer):
 
 
 class StandardLimitPagination(pagination.LimitOffsetPagination):
-    default_limit = 10
-    max_limit = 50
+    default_limit = 60
+    max_limit = 60
 
 
 class ChallengesViewSet(viewsets.ReadOnlyModelViewSet):
