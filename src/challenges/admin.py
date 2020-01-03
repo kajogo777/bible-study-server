@@ -103,6 +103,7 @@ class ChallengeAdmin(admin.ModelAdmin):
     inlines = [
         AnswerInline,
     ]
+    date_hierarchy = 'active_date'
 
     form = ChallengeAdminForm
 

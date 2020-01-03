@@ -15,6 +15,7 @@ from .forms import AdminUserCreationForm, AdminUserChangeForm
 from django import forms
 from django.utils import timezone
 from challenges.models import Challenge
+from django.db.models import Count, Q, Subquery, OuterRef, F, Case, When, IntegerField
 
 
 class AdminUserAdmin(UserAdmin):
@@ -232,12 +233,65 @@ class GroupFilter(admin.SimpleListFilter):
         return queryset
 
 
+class ReadingsFilter(admin.SimpleListFilter):
+    title = 'total solved'
+    parameter_name = 'solved_count'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('4', '75-100%'),
+            ('3', '50-74%'),
+            ('2', '25-49%'),
+            ('1', '0-24%'),
+        )
+
+    def queryset(self, request, queryset):
+        value = self.value()
+        if value == '4':
+            return queryset.filter(_percentage_solved__range=(75, 100))
+        elif value == '3':
+            return queryset.filter(_percentage_solved__range=(50, 74))
+        elif value == '2':
+            return queryset.filter(_percentage_solved__range=(25, 49))
+        elif value == '1':
+            return queryset.filter(_percentage_solved__range=(0, 24))
+        return queryset
+
+
+class MonthFilter(admin.SimpleListFilter):
+    title = 'challenge month'
+    parameter_name = 'challenge_month'
+
+    def lookups(self, request, model_admin):
+        return (
+            (1, 'January'),
+            (2, 'February'),
+            (3, 'March'),
+            (4, 'April'),
+            (5, 'May'),
+            (6, 'June'),
+            (7, 'July'),
+            (8, 'August'),
+            (9, 'September'),
+            (10, 'October'),
+            (11, 'November'),
+            (12, 'December'),
+        )
+
+    def queryset(self, request, queryset):
+        value = self.value()
+        print(value)
+        return queryset
+
+
 class RegularUserAdmin(admin.ModelAdmin):
-    list_display = ('name', 'group', 'group_class', 'get_solved',
-                    'get_read', 'date_of_birth', 'gender')
+    list_display = ('name', 'group', 'group_class', 'solved_count',
+                    'read_count', 'date_of_birth', 'gender')
     list_filter = (
         GroupFilter,
-        ClassFilter
+        ClassFilter,
+        ReadingsFilter,
+        MonthFilter
     )
     search_fields = (
         'name',
@@ -246,6 +300,7 @@ class RegularUserAdmin(admin.ModelAdmin):
         ResponseInline,
     ]
     actions = [download_pdf]
+    # date_hierarchy = 'response__challenge__active_date'
     form = RegularUserForm
 
     def get_form(self, request, *args, **kwargs):
@@ -263,28 +318,47 @@ class RegularUserAdmin(admin.ModelAdmin):
             qs = qs.filter(group=request.user.service_group)
         if request.user.service_class is not None:
             qs = qs.filter(group_class=request.user.service_class)
+
+        qs = qs.annotate(
+            _read_count=Count("response"),
+            _solved_count=Count(
+                "response", filter=Q(response__answer__correct=True)),
+            _total_challenges=Subquery(
+                Group.objects.filter(id=OuterRef('group_id'))
+                .annotate(
+                    _challenge_count=Count(
+                        "challenge",
+                        filter=Q(challenge__active_date__lte=timezone.localtime(
+                            timezone.now()).date())
+                    )
+                ).values('_challenge_count')[:1],
+                output_field=IntegerField()
+            ),
+            _percentage_solved=Case(
+                When(_total_challenges=0, then=0),
+                default=(100.0 * F('_solved_count') / F('_total_challenges'))
+            )
+        )
+
         return qs
 
-    def get_solved(self, obj):
-        today = timezone.localtime(timezone.now()).date()
-        total = Challenge.objects.filter(
-            group=obj.group, active_date__lte=today).count()
-        if total == 0:
-            return '-'
-        correct_answers = obj.response_set.filter(
-            answer__correct=True).count()
-        return '{}/{} ({:.2f} %)'.format(correct_answers, total, correct_answers/total*100)
-    get_solved.short_description = 'Solved'
+    def challenge_month(self, obj):
+        return None
 
-    def get_read(self, obj):
-        today = timezone.localtime(timezone.now()).date()
-        total = Challenge.objects.filter(
-            group=obj.group, active_date__lte=today).count()
-        if total == 0:
-            return '-'
-        all_answers = obj.response_set.count()
-        return '{}/{} ({:.2f} %)'.format(all_answers, total, all_answers/total*100)
-    get_read.short_description = 'Read'
+    # def score(self, obj):
+    #     return obj._score
+    # read_count.short_description = 'Score'
+    # read_count.admin_order_field = '_score'
+
+    def read_count(self, obj):
+        return f'{obj._read_count}/{obj._total_challenges}'
+    read_count.short_description = 'Read'
+    read_count.admin_order_field = '_read_count'
+
+    def solved_count(self, obj):
+        return f'{obj._solved_count}/{obj._total_challenges} ({obj._percentage_solved:.2f}%)'
+    solved_count.short_description = 'Correct'
+    solved_count.admin_order_field = '_solved_count'
 
     def render_change_form(self, request, context, *args, **kwargs):
         if request.user.service_group is not None:
