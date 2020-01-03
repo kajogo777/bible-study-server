@@ -342,8 +342,8 @@ class RegularUserAdmin(admin.ModelAdmin):
     list_filter = (
         GroupFilter,
         ClassFilter,
+        MonthFilter,
         ReadingsFilter,
-        MonthFilter
     )
     search_fields = (
         'name',
