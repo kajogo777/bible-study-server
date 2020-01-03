@@ -37,6 +37,7 @@ class Challenge(models.Model):
 
     reward_color = models.CharField(max_length=10, blank=False, null=False)
     reward_name = models.CharField(max_length=100, blank=False, null=False)
+    reward_score = models.PositiveIntegerField(default=0)
 
     def __str__(self):
         return "{}: {}".format(self.group.name, self.active_date)

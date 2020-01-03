@@ -94,7 +94,7 @@ class GroupFilter(admin.SimpleListFilter):
 
 class ChallengeAdmin(admin.ModelAdmin):
     form = ChallengeAdminForm
-    list_display = ('active_date', 'group', 'verse', 'reward')
+    list_display = ('active_date', 'group', 'verse', 'reward', 'reward_score')
     list_filter = (
         GroupFilter,
         'active_date',

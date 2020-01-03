@@ -15,7 +15,7 @@ from .forms import AdminUserCreationForm, AdminUserChangeForm
 from django import forms
 from django.utils import timezone
 from challenges.models import Challenge
-from django.db.models import Count, Q, Subquery, OuterRef, F, Case, When, IntegerField
+from django.db.models import Count, Sum, Q, Subquery, OuterRef, F, Case, When, IntegerField
 
 
 class AdminUserAdmin(UserAdmin):
@@ -258,40 +258,40 @@ class ReadingsFilter(admin.SimpleListFilter):
         return queryset
 
 
-class MonthFilter(admin.SimpleListFilter):
-    title = 'challenge month'
-    parameter_name = 'challenge_month'
+# class MonthFilter(admin.SimpleListFilter):
+#     title = 'challenge month'
+#     parameter_name = 'challenge_month'
 
-    def lookups(self, request, model_admin):
-        return (
-            (1, 'January'),
-            (2, 'February'),
-            (3, 'March'),
-            (4, 'April'),
-            (5, 'May'),
-            (6, 'June'),
-            (7, 'July'),
-            (8, 'August'),
-            (9, 'September'),
-            (10, 'October'),
-            (11, 'November'),
-            (12, 'December'),
-        )
+#     def lookups(self, request, model_admin):
+#         return (
+#             (1, 'January'),
+#             (2, 'February'),
+#             (3, 'March'),
+#             (4, 'April'),
+#             (5, 'May'),
+#             (6, 'June'),
+#             (7, 'July'),
+#             (8, 'August'),
+#             (9, 'September'),
+#             (10, 'October'),
+#             (11, 'November'),
+#             (12, 'December'),
+#         )
 
-    def queryset(self, request, queryset):
-        value = self.value()
-        print(value)
-        return queryset
+#     def queryset(self, request, queryset):
+#         value = self.value()
+#         print(value)
+#         return queryset
 
 
 class RegularUserAdmin(admin.ModelAdmin):
     list_display = ('name', 'group', 'group_class', 'solved_count',
-                    'read_count', 'date_of_birth', 'gender')
+                    'read_count', 'total_score', 'date_of_birth', 'gender')
     list_filter = (
         GroupFilter,
         ClassFilter,
         ReadingsFilter,
-        MonthFilter
+        # MonthFilter
     )
     search_fields = (
         'name',
@@ -337,7 +337,8 @@ class RegularUserAdmin(admin.ModelAdmin):
             _percentage_solved=Case(
                 When(_total_challenges=0, then=0),
                 default=(100.0 * F('_solved_count') / F('_total_challenges'))
-            )
+            ),
+            _total_score=Sum("response__challenge__reward_score")
         )
 
         return qs
@@ -345,10 +346,10 @@ class RegularUserAdmin(admin.ModelAdmin):
     def challenge_month(self, obj):
         return None
 
-    # def score(self, obj):
-    #     return obj._score
-    # read_count.short_description = 'Score'
-    # read_count.admin_order_field = '_score'
+    def total_score(self, obj):
+        return obj._total_score
+    total_score.short_description = 'Total Score'
+    total_score.admin_order_field = '_total_score'
 
     def read_count(self, obj):
         return f'{obj._read_count}/{obj._total_challenges}'
