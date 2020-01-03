@@ -16,6 +16,7 @@ from django import forms
 from django.utils import timezone
 from challenges.models import Challenge
 from django.db.models import Count, Sum, Q, Subquery, OuterRef, F, Case, When, IntegerField
+import itertools
 
 
 class AdminUserAdmin(UserAdmin):
@@ -258,30 +259,81 @@ class ReadingsFilter(admin.SimpleListFilter):
         return queryset
 
 
-# class MonthFilter(admin.SimpleListFilter):
-#     title = 'challenge month'
-#     parameter_name = 'challenge_month'
+class MonthFilter(admin.SimpleListFilter):
+    title = 'challenge month'
+    parameter_name = 'challenge_month'
 
-#     def lookups(self, request, model_admin):
-#         return (
-#             (1, 'January'),
-#             (2, 'February'),
-#             (3, 'March'),
-#             (4, 'April'),
-#             (5, 'May'),
-#             (6, 'June'),
-#             (7, 'July'),
-#             (8, 'August'),
-#             (9, 'September'),
-#             (10, 'October'),
-#             (11, 'November'),
-#             (12, 'December'),
-#         )
+    def lookups(self, request, model_admin):
+        now = timezone.now()
+        current_year = now.year
+        current_month = now.month
+        years = [current_year, current_year-1]
+        months = [
+            (12, 'December'),
+            (11, 'November'),
+            (10, 'October'),
+            (9, 'September'),
+            (8, 'August'),
+            (7, 'July'),
+            (6, 'June'),
+            (5, 'May'),
+            (4, 'April'),
+            (3, 'March'),
+            (2, 'February'),
+            (1, 'January'),
+        ]
 
-#     def queryset(self, request, queryset):
-#         value = self.value()
-#         print(value)
-#         return queryset
+        options = itertools.product(years, months)
+        options = [
+            (
+                f'{y}-{m[0]}',
+                f'{m[1]} {y}'
+            )
+            for y, m in options if y < current_year or m[0] <= current_month
+        ]
+        return options
+
+    def queryset(self, request, queryset):
+        value = self.value()
+        if value is not None:
+            value = value.split("-")
+            year, month = int(value[0]), int(value[1])
+            queryset = queryset.annotate(
+                _read_count=Count("response", filter=Q(
+                    response__challenge__active_date__month=month,
+                    response__challenge__active_date__year=year
+                )),
+                _solved_count=Count(
+                    "response", filter=Q(
+                        response__answer__correct=True,
+                        response__challenge__active_date__month=month,
+                        response__challenge__active_date__year=year
+                    )),
+                _total_challenges=Subquery(
+                    Group.objects.filter(id=OuterRef('group_id'))
+                    .annotate(
+                        _challenge_count=Count(
+                            "challenge",
+                            filter=Q(
+                                challenge__active_date__lte=timezone.localtime(
+                                    timezone.now()).date(),
+                                challenge__active_date__month=month,
+                                challenge__active_date__year=year
+                            ))
+                    ).values('_challenge_count')[:1],
+                    output_field=IntegerField()
+                ),
+                _percentage_solved=Case(
+                    When(_total_challenges=0, then=0),
+                    default=(100.0 * F('_solved_count') /
+                             F('_total_challenges'))
+                ),
+                _total_score=Sum("response__challenge__reward_score",
+                                 filter=Q(
+                                     response__challenge__active_date__month=month,
+                                     response__challenge__active_date__year=year))
+            )
+        return queryset
 
 
 class RegularUserAdmin(admin.ModelAdmin):
@@ -291,7 +343,7 @@ class RegularUserAdmin(admin.ModelAdmin):
         GroupFilter,
         ClassFilter,
         ReadingsFilter,
-        # MonthFilter
+        MonthFilter
     )
     search_fields = (
         'name',
