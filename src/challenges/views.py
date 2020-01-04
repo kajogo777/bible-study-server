@@ -66,10 +66,14 @@ class ChallengeSerializer(serializers.BaseSerializer):
         scripture_reference_en = "{} {}:{}".format(
             challenge.start_verse.chapter.book.name_en, challenge.start_verse.chapter.index, verse_range_en)
 
+        today = timezone.localtime(timezone.now()).date()
+
         return {
             'id': challenge.id,
             'question': challenge.question,
             'answers': answers,
+            'active': challenge.active_date == today,
+            'expired': challenge.active_date < today,
             'active_date': challenge.active_date.strftime('%Y-%m-%d'),
             'scripture': {
                 'verse_indexes': scripture_verse_indexes,

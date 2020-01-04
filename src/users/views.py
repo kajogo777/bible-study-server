@@ -3,6 +3,7 @@ from django_filters import rest_framework as filters
 from rest_framework.permissions import IsAuthenticated
 from .models import User, Group, Response
 from .authentication import CodeAuthentication, IsOwner, IsAuthenticated
+from django.utils import timezone
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -23,6 +24,14 @@ class ResponseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Response
         fields = ('id', 'user', 'challenge', 'answer')
+
+    def validate(self, attrs):
+        challenge = attrs.get('challenge')
+        today = timezone.localtime(timezone.now()).date()
+        if today != challenge.active_date:
+            raise serializers.ValidationError(
+                'Responding to challenge should be done on its active date.')
+        return attrs
 
 
 class UsersViewSet(viewsets.ReadOnlyModelViewSet):
