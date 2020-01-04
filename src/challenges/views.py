@@ -89,6 +89,7 @@ class ChallengeSerializer(serializers.BaseSerializer):
             'reward': {
                 'name': challenge.reward_name,
                 'color': challenge.reward_color,
+                'score': challenge.reward_score,
             },
         }
 
