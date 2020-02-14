@@ -117,7 +117,7 @@ class ChallengesViewSet(viewsets.ReadOnlyModelViewSet):
             group=user.group,
             active_date__lte=today,
             # active_date__month__in=[today.month, today.month-1]
-        ).order_by('-active_date')
+        ).order_by('-active_date')[:60]
 
     def list(self, request):
         user = self.request.user
