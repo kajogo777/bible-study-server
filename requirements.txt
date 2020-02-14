@@ -6,3 +6,4 @@ git+https://github.com/kajogo777/django-smart-selects.git@master
 django-jet==1.0.8
 django-filter==2.1.0
 reportlab==3.5.23
+psycopg2==2.7.3.2
