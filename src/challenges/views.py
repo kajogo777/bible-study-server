@@ -6,6 +6,8 @@ from .models import Challenge, Answer
 from bible.serializers import BibleVerseSerializer
 from bible.models import BibleVerse
 from django.utils import timezone
+from django.core.cache import cache
+from rest_framework.response import Response as HttpResponse
 
 
 class ResponseSerializer(serializers.ModelSerializer):
@@ -28,13 +30,13 @@ class RedactedAnswerSerializer(serializers.ModelSerializer):
 
 class ChallengeSerializer(serializers.BaseSerializer):
     def to_representation(self, challenge):
-        user = self.context['request'].user
+        # user = self.context['request'].user
 
-        try:
-            response_obj = Response.objects.get(user=user, challenge=challenge)
-            response = ResponseSerializer(response_obj).data
-        except Response.DoesNotExist:
-            response = None
+        # try:
+        #     response_obj = Response.objects.get(user=user, challenge=challenge)
+        #     response = ResponseSerializer(response_obj).data
+        # except Response.DoesNotExist:
+        #     response = None
 
         if challenge.active_date >= timezone.localtime(timezone.now()).date():
             answers = RedactedAnswerSerializer(
@@ -85,7 +87,7 @@ class ChallengeSerializer(serializers.BaseSerializer):
                 'reference': scripture_reference,
                 'reference_en': scripture_reference_en
             },
-            'response': response,
+            # 'response': response,
             'reward': {
                 'name': challenge.reward_name,
                 'color': challenge.reward_color,
@@ -94,9 +96,9 @@ class ChallengeSerializer(serializers.BaseSerializer):
         }
 
 
-class StandardLimitPagination(pagination.LimitOffsetPagination):
-    default_limit = 60
-    max_limit = 60
+# class StandardLimitPagination(pagination.LimitOffsetPagination):
+#     default_limit = 60
+#     max_limit = 60
 
 
 class ChallengesViewSet(viewsets.ReadOnlyModelViewSet):
@@ -106,7 +108,7 @@ class ChallengesViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = ChallengeSerializer
     # filter_backends = (filters.DjangoFilterBackend,)
     # filterset_fields = ('group', 'active_date')
-    pagination_class = StandardLimitPagination
+    # pagination_class = StandardLimitPagination
 
     def get_queryset(self):
         today = timezone.localtime(timezone.now()).date()
@@ -116,3 +118,31 @@ class ChallengesViewSet(viewsets.ReadOnlyModelViewSet):
             active_date__lte=today,
             # active_date__month__in=[today.month, today.month-1]
         ).order_by('-active_date')
+
+    def list(self, request):
+        user = self.request.user
+        today = timezone.localtime(timezone.now()).date()
+        cache_key = f'{today.day}-{user.group.id}'
+
+        challenges = cache.get(cache_key)
+
+        if challenges is None:
+            response = super(ChallengesViewSet, self).list(request)
+            if response.status_code == 200:
+                cache.set(cache_key, response.data, timeout=60*60*2)
+                challenges = response.data
+            else:
+                return response
+
+        for index, challenge in enumerate(challenges):
+            challenge_id = challenge['id']
+            try:
+                response_obj = Response.objects.get(
+                    user=user, challenge__id=challenge_id)
+                serialized_response = ResponseSerializer(response_obj).data
+            except Response.DoesNotExist:
+                serialized_response = None
+            challenge['response'] = serialized_response
+            challenges[index] = challenge
+
+        return HttpResponse({'results': challenges})
