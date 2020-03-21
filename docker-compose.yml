@@ -2,6 +2,7 @@ version: "3"
 
 volumes:
   pg-data:
+  static-files:
 
 services:
   db:
@@ -14,16 +15,33 @@ services:
     volumes:
       - pg-data:/var/lib/postgresql/data
 
-  web:
+  app:
     build: .
     restart: always
-    ports:
-      - "80:8000"
     environment:
       - POSTGRES_PASSWORD
       - POSTGRES_USER=stmaryrehab
       - POSTGRES_DB=stmaryrehab
+      - ALLOWED_HOSTS
     links:
       - db
     depends_on:
       - db
+    volumes:
+      - static-files:/static
+      - ./src:/code/
+
+  proxy:
+    image: nginx
+    ports:
+      - "80:80"
+    links:
+      - app
+    depends_on:
+      - app
+    environment: 
+      - ALLOWED_HOSTS
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx_run.sh:/nginx_run.sh:ro
+      - static-files:/var/www/static

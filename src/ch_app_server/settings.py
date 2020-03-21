@@ -25,15 +25,7 @@ SECRET_KEY = '0rr10b8wg=_0w6oci=nk=s!4(_*@f%4&dekbt@c@x(4o&vn-rd'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [
-    "192.168.1.144",
-    "192.168.43.24",
-    "192.168.1.133",
-    "192.168.1.145",
-    "10.0.2.2",
-    "localhost",
-    "evangelion.stmary-rehab.com"
-]
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,evangelion.stmary-rehab.com').split(',')
 
 
 # Application definition
@@ -148,9 +140,12 @@ REST_FRAMEWORK = {
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = '/static'
 
 USE_DJANGO_JQUERY = True
 
 JET_DEFAULT_THEME = 'default'
 JET_SIDE_MENU_COMPACT = True
 JET_CHANGE_FORM_SIBLING_LINKS = False
+
+
