@@ -7,7 +7,8 @@ class Topic(models.Model):
     title = models.CharField(
         max_length=100,
         blank=False,
-        null=False
+        null=False,
+        unique=True
     )
     intro_text = models.TextField(
         max_length=1000,
@@ -19,7 +20,7 @@ class Topic(models.Model):
         return self.title
 
 
-class TopicReading(model.Model):
+class TopicReading(models.Model):
     topic = models.ForeignKey(
         'topics.Topic',
         on_delete=models.PROTECT,
@@ -31,11 +32,6 @@ class TopicReading(model.Model):
         null=False,
         db_index=True
     )
-    bible_study_text = models.TextField(
-        max_length=1000,
-        blank=True,
-        null=True
-    )
     book = models.ForeignKey(
         BibleBook,
         on_delete=models.PROTECT,
@@ -44,24 +40,41 @@ class TopicReading(model.Model):
     )
     chapter = ChainedForeignKey(
         BibleChapter,
-        chained_field="book",
-        chained_model_field="book",
+        chained_field='book',
+        chained_model_field='book',
         show_all=False,
         on_delete=models.PROTECT, blank=False, null=False)
     start_verse = ChainedForeignKey(
         BibleVerse,
-        chained_field="chapter",
-        chained_model_field="chapter",
+        chained_field='chapter',
+        chained_model_field='chapter',
         show_all=False,
         related_name='start_reading',
         on_delete=models.PROTECT, blank=False, null=False)
     end_verse = ChainedForeignKey(
         BibleVerse,
-        chained_field="chapter",
-        chained_model_field="chapter",
+        chained_field='chapter',
+        chained_model_field='chapter',
         show_all=False,
         related_name='end_reading',
         on_delete=models.PROTECT, blank=False, null=False)
+    bible_study_text = models.TextField(
+        max_length=1000,
+        blank=True,
+        null=True
+    )
+
+    class Meta:
+        unique_together = [['topic', 'index']]
+
+    def __str__(self):
+        if self.index == 1:
+            return '1st'
+        if self.index == 2:
+            return '2nd'
+        if self.index == 3:
+            return '3rd'
+        return f'{self.index}th'
 
 
 class TopicGroup(models.Model):
@@ -83,6 +96,9 @@ class TopicGroup(models.Model):
         null=True
     )
 
+    class Meta:
+        unique_together = [['topic', 'group']]
+
 
 class TopicUser(models.Model):
     topic = models.ForeignKey(
@@ -101,3 +117,6 @@ class TopicUser(models.Model):
         blank=False,
         null=False,
     )
+
+    class Meta:
+        unique_together = [['topic', 'user']]

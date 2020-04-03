@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'bible',
     'challenges',
     'users',
+    'topics',
 ]
 
 AUTH_USER_MODEL = 'users.AdminUser'
