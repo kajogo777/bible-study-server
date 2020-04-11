@@ -11,4 +11,5 @@ python manage.py migrate
 # Start server
 echo "Starting server"
 # python manage.py runserver 0.0.0.0:8000
-gunicorn ch_app_server.wsgi:application -w 1 -b 0.0.0.0:8000 --reload
+export PYTHONUNBUFFERED=TRUE
+gunicorn ch_app_server.wsgi:application -w 2 -b 0.0.0.0:8000 --reload --access-logfile -
