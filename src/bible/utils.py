@@ -1,3 +1,6 @@
+from django.core.cache import cache
+from .models import BibleVerse
+
 ar_book_name = {
     'Genesis': 'تكوين',
     'Exodus': 'خروج',
@@ -161,3 +164,48 @@ def index_to_superscript(index):
         result = superscript_map[index % 10] + result
         index //= 10
     return result
+
+
+def get_scripture(start_verse, end_verse):
+    cache_key = f'scripture:{start_verse.chapter.id}:{start_verse.id}:{end_verse.id}'
+
+    scripture = cache.get(cache_key)
+
+    if scripture is None:
+        verses = BibleVerse.objects.filter(
+            chapter=start_verse.chapter, index__gte=start_verse.index, index__lte=end_verse.index)
+
+        scripture_verse_text = [verse.text for verse in verses]
+        scripture_verse_text_en = [verse.text_en for verse in verses]
+        scripture_verse_indexes = [verse.index for verse in verses]
+
+        if start_verse.id == end_verse.id:
+            verse_range = start_verse.index
+            verse_range_en = start_verse.index
+        else:
+            verse_range = "{}-{}".format(
+                end_verse.index, start_verse.index
+            )
+            verse_range_en = "{}-{}".format(
+                start_verse.index, end_verse.index
+            )
+
+        scripture_reference = "{}:{} {}".format(
+            verse_range, start_verse.chapter.index, start_verse.chapter.book.name)
+        scripture_reference_en = "{} {}:{}".format(
+            start_verse.chapter.book.name_en, start_verse.chapter.index, verse_range_en)
+
+        scripture = {
+            'verse_indexes': scripture_verse_indexes,
+            'verse_text': scripture_verse_text,
+            'verse_text_en': scripture_verse_text_en,
+            'chapter': start_verse.chapter.index,
+            'book': start_verse.chapter.book.name,
+            'book_en': start_verse.chapter.book.name_en,
+            'reference': scripture_reference,
+            'reference_en': scripture_reference_en
+        }
+
+        cache.set(cache_key, scripture, timeout=60*60*24*30)
+
+    return scripture
