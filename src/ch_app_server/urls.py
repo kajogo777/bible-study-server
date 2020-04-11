@@ -18,6 +18,7 @@ from django.urls import include, path
 from rest_framework import routers
 from challenges.urls import router as challenges_router
 from users.urls import router as users_router
+from topics.urls import router as topics_router,  topics_nested_router
 
 router = routers.SimpleRouter()
 router.registry.extend(challenges_router.registry)
@@ -28,5 +29,6 @@ urlpatterns = [
     path('jet/', include('jet.urls', 'jet')),
     path('chaining/', include('smart_selects.urls')),
     path('api/', include(router.urls)),
+    path('api/', include(topics_router.urls)),
+    path('api/', include(topics_nested_router.urls)),
 ]
-
