@@ -29,7 +29,7 @@ class TopicSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Topic
-        fields = ('id', 'title', 'intro_text', 'readings')
+        fields = ('id', 'title', 'type', 'intro_text', 'readings')
 
 
 class StandardLimitPagination(pagination.LimitOffsetPagination):

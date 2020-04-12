@@ -15,6 +15,16 @@ class Topic(models.Model):
         blank=True,
         null=True
     )
+    type = models.CharField(
+        max_length=10,
+        choices=(
+            ('Issue', 'Issue'),
+            ('Mood', 'Mood')
+        ),
+        blank=True,
+        null=True,
+        db_index=True
+    )
 
     def __str__(self):
         return self.title
