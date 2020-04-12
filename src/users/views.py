@@ -116,10 +116,10 @@ class UserScoreViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
             'total_challenges': total_challenges,
             'total_attempted': total_attempted,
             'total_correct': total_correct,
-            'total_score': total_score,
+            'total_score': total_score or 0,
 
             'total_challenges_last_30_days': total_challenges_last_30_days,
             'total_attempted_last_30_days': total_attempted_last_30_days,
             'total_correct_last_30_days': total_correct_last_30_days,
-            'total_score_last_30_days': total_score_last_30_days,
+            'total_score_last_30_days': total_score_last_30_days or 0,
         })
