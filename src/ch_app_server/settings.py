@@ -25,7 +25,8 @@ SECRET_KEY = '0rr10b8wg=_0w6oci=nk=s!4(_*@f%4&dekbt@c@x(4o&vn-rd'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,evangelion.stmary-rehab.com').split(',')
+ALLOWED_HOSTS = os.getenv(
+    'ALLOWED_HOSTS', 'localhost,evangelion.stmary-rehab.com').split(',')
 
 
 # Application definition
@@ -41,11 +42,14 @@ INSTALLED_APPS = [
     'rest_framework',
     'smart_selects',
     'django_filters',
+    'ckeditor',
+    # 'ckeditor_uploader',
 
     'bible',
     'challenges',
     'users',
     'topics',
+    'posts',
 ]
 
 AUTH_USER_MODEL = 'users.AdminUser'
@@ -142,6 +146,8 @@ REST_FRAMEWORK = {
 
 STATIC_URL = '/static/'
 STATIC_ROOT = '/static'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = '/media'
 
 USE_DJANGO_JQUERY = True
 
@@ -149,4 +155,23 @@ JET_DEFAULT_THEME = 'default'
 JET_SIDE_MENU_COMPACT = True
 JET_CHANGE_FORM_SIBLING_LINKS = False
 
+CKEDITOR_BASEPATH = '/static/ckeditor/ckeditor/'
+CKEDITOR_UPLOAD_PATH = ''
 
+CKEDITOR_CONFIGS = {
+    'default': {
+        # 'skin': 'moono',
+        'toolbar': 'Custom',
+        'toolbar_Custom': [
+            ['Format', 'Font', 'FontSize', 'TextColor', 'BGColor'],
+            ['Bold', 'Italic', 'Underline', 'Strike'],
+            ['NumberedList', 'BulletedList',  'Outdent', 'Indent', 'JustifyLeft',
+                'JustifyCenter', 'JustifyRight', 'JustifyBlock', 'BidiLtr', 'BidiRtl'],
+            # ['Link', 'Unlink', 'Image',],
+            ['Table', 'HorizontalRule', 'Smiley', 'SpecialChar'],
+            ['Undo', 'Redo']
+        ],
+        'extraPlugins': 'uploadimage'
+    }
+}
+# CKEDITOR_IMAGE_BACKEND = 'pillow'

@@ -3,6 +3,7 @@ version: "3"
 volumes:
   pg-data:
   static-files:
+  media-files:
 
 services:
   db:
@@ -29,6 +30,7 @@ services:
       - db
     volumes:
       - static-files:/static
+      - media-files:/media
       - ./src:/code/
 
   proxy:
@@ -42,6 +44,8 @@ services:
     environment: 
       - ALLOWED_HOSTS
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx_template.conf:/etc/nginx/nginx_template.conf:ro
       - ./nginx_run.sh:/nginx_run.sh:ro
-      - static-files:/var/www/static
+      - static-files:/var/www/static:ro
+      - media-files:/var/www/media:ro
+    command: /bin/bash /nginx_run.sh

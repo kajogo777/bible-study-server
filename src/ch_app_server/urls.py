@@ -19,10 +19,12 @@ from rest_framework import routers
 from challenges.urls import router as challenges_router
 from users.urls import router as users_router
 from topics.urls import router as topics_router,  topics_nested_router
+from posts.urls import router as posts_router
 
 router = routers.SimpleRouter()
 router.registry.extend(challenges_router.registry)
 router.registry.extend(users_router.registry)
+router.registry.extend(posts_router.registry)
 
 urlpatterns = [
     path('', admin.site.urls),
