@@ -96,15 +96,30 @@ class TopicUserInline(admin.TabularInline):
     verbose_name_plural = "Topics"
 
 
+class LimitModelFormset(forms.BaseInlineFormSet):
+    """ Base Inline formset to limit inline Model query results. """
+
+    def __init__(self, *args, **kwargs):
+        super(LimitModelFormset, self).__init__(*args, **kwargs)
+        _kwargs = {self.fk.name: kwargs['instance']}
+        self.queryset = kwargs['queryset'].filter(
+            **_kwargs).order_by('-challenge__active_date')[:10]
+
+
 class ResponseInline(admin.TabularInline):
     model = Response
     extra = 0
     min_num = 0
+    formset = LimitModelFormset
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if db_field.name == "challenge" and request.user.service_group is not None:
-            kwargs["queryset"] = Challenge.objects.filter(
-                group=request.user.service_group)
+        if db_field.name == "challenge":
+            # if request.user.service_group is not None:
+            #     kwargs["queryset"] = Challenge.objects.filter(
+            #         group=request.user.service_group)
+            if request._obj_ is not None:
+                kwargs["queryset"] = Challenge.objects.filter(
+                    group=request._obj_.group)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
@@ -323,8 +338,9 @@ class RegularUserAdmin(admin.ModelAdmin):
     # date_hierarchy = 'response__challenge__active_date'
     form = RegularUserForm
 
-    def get_form(self, request, *args, **kwargs):
-        form = super(RegularUserAdmin, self).get_form(request, *args, **kwargs)
+    def get_form(self, request, obj=None, **kwargs):
+        request._obj_ = obj
+        form = super(RegularUserAdmin, self).get_form(request, obj, **kwargs)
         form.user = request.user
         if request.user.service_group is not None:
             form.base_fields['group'].initial = request.user.service_group
