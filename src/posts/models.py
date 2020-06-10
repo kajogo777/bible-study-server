@@ -13,8 +13,8 @@ class Post(models.Model):
         auto_now=False, auto_now_add=False, blank=False, null=False)
     summary = models.TextField(
         max_length=200,
-        blank=True,
-        null=True
+        blank=False,
+        null=False,
     )
     text = RichTextField(
         config_name='default',
