@@ -33,4 +33,5 @@ urlpatterns = [
     path('api/', include(router.urls)),
     path('api/', include(topics_router.urls)),
     path('api/', include(topics_nested_router.urls)),
+    path('explorer-view/', include('explorer.urls')),
 ]

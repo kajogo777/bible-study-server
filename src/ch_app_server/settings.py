@@ -23,7 +23,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '0rr10b8wg=_0w6oci=nk=s!4(_*@f%4&dekbt@c@x(4o&vn-rd'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = os.getenv(
     'ALLOWED_HOSTS', 'localhost,evangelion.stmary-rehab.com').split(',')
@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'django_filters',
     'ckeditor',
     # 'ckeditor_uploader',
+    'explorer',
 
     'bible',
     'challenges',
@@ -175,3 +176,42 @@ CKEDITOR_CONFIGS = {
     }
 }
 # CKEDITOR_IMAGE_BACKEND = 'pillow'
+
+
+EXPLORER_CONNECTIONS = {'Default': 'default'}
+EXPLORER_DEFAULT_CONNECTION = 'default'
+
+
+def EXPLORER_PERMISSION_VIEW(u): return u.is_staff and u.groups.filter(
+    name="analytics").exists()
+
+
+def EXPLORER_PERMISSION_CHANGE(u): return u.is_staff and u.groups.filter(
+    name="analytics").exists()
+
+
+EXPLORER_SQL_BLACKLIST = (
+    "ALTER",
+    "RENAME ",
+    "DROP",
+    "TRUNCATE",
+    "INSERT INTO",
+    "UPDATE",
+    "REPLACE",
+    "DELETE",
+    "ALTER",
+    "CREATE TABLE",
+    "SCHEMA",
+    "GRANT",
+    "OWNER TO",
+    "CREATED",
+    "UPDATED",
+    "DELETED",
+    "REGEXP_REPLAC"
+)
+EXPLORER_SQL_WHITELIST = tuple()
+EXPLORER_SCHEMA_INCLUDE_TABLE_PREFIXES = (
+    "posts",
+    "users",
+    "challenges"
+)
