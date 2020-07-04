@@ -36,4 +36,4 @@ class PostViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         user = self.request.user
         today = timezone.localtime(timezone.now()).date()
-        return Post.objects.filter(postgroup__group=user.group, active_date__lte=today,)
+        return Post.objects.filter(postgroup__group=user.group, active_date__lte=today,).order_by("-active_date")
