@@ -312,6 +312,7 @@ class MonthFilter(admin.SimpleListFilter):
                 ),
                 _total_score=Sum("response__challenge__reward_score",
                                  filter=Q(
+                                     response__answer__correct=True,
                                      response__challenge__active_date__month=month,
                                      response__challenge__active_date__year=year))
             )
