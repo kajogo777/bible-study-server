@@ -375,7 +375,8 @@ class RegularUserAdmin(admin.ModelAdmin):
                 When(_total_challenges=0, then=0),
                 default=(100.0 * F('_solved_count') / F('_total_challenges'))
             ),
-            _total_score=Sum("response__challenge__reward_score")
+            _total_score=Sum("response__challenge__reward_score",
+                             filter=Q(response__answer__correct=True))
         )
 
         return qs
