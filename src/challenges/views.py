@@ -7,29 +7,32 @@ from django.utils import timezone
 from django.core.cache import cache
 from rest_framework.response import Response as HttpResponse
 from bible.utils import get_scripture
+from ch_app_server.utils import get_year_start
 
 
 class ResponseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Response
-        fields = ('id', 'answer')
+        fields = ("id", "answer")
 
 
 class AnswerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Answer
-        fields = ('id', 'text', 'correct')
+        fields = ("id", "text", "correct")
 
 
 class RedactedAnswerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Answer
-        fields = ('id', 'text')
+        fields = ("id", "text")
 
 
 class ChallengeSerializer(serializers.BaseSerializer):
     def to_representation(self, challenge):
-        user = self.context['request'].user
+        user = self.context["request"].user
+
+        year_start = get_year_start()
 
         try:
             response_obj = Response.objects.get(user=user, challenge=challenge)
@@ -38,29 +41,27 @@ class ChallengeSerializer(serializers.BaseSerializer):
             response = None
 
         if challenge.active_date >= timezone.localtime(timezone.now()).date():
-            answers = RedactedAnswerSerializer(
-                challenge.answer_set, many=True).data
+            answers = RedactedAnswerSerializer(challenge.answer_set, many=True).data
         else:
-            answers = AnswerSerializer(
-                challenge.answer_set, many=True).data
+            answers = AnswerSerializer(challenge.answer_set, many=True).data
 
         scripture = get_scripture(challenge.start_verse, challenge.end_verse)
 
         today = timezone.localtime(timezone.now()).date()
 
         return {
-            'id': challenge.id,
-            'question': challenge.question,
-            'answers': answers,
-            'active': challenge.active_date == today,
-            'expired': challenge.active_date < today,
-            'active_date': challenge.active_date.strftime('%Y-%m-%d'),
-            'scripture': scripture,
-            'response': response,
-            'reward': {
-                'name': challenge.reward_name,
-                'color': challenge.reward_color,
-                'score': challenge.reward_score,
+            "id": challenge.id,
+            "question": challenge.question,
+            "answers": answers,
+            "active": challenge.active_date == today,
+            "expired": challenge.active_date < today,
+            "active_date": challenge.active_date.strftime("%Y-%m-%d"),
+            "scripture": scripture,
+            "response": response,
+            "reward": {
+                "name": challenge.reward_name,
+                "color": challenge.reward_color,
+                "score": challenge.reward_score,
             },
         }
 
@@ -82,14 +83,15 @@ class ChallengesViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         today = timezone.localtime(timezone.now()).date()
         user = self.request.user
-        return Challenge.objects.filter(
-            group=user.group,
-            active_date__lte=today,
-            # active_date__month__in=[today.month, today.month-1]
-        ).prefetch_related(
-            'answer_set'
-        ).order_by(
-            '-active_date'
+        return (
+            Challenge.objects.filter(
+                group=user.group,
+                active_date__lte=today,
+                active_date__gte=get_year_start(),
+                # active_date__month__in=[today.month, today.month-1]
+            )
+            .prefetch_related("answer_set")
+            .order_by("-active_date")
         )  # [:60]
 
     # def list(self, request):
