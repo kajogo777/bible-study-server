@@ -93,7 +93,6 @@ class UserScoreViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
             user=user,
             challenge__active_date__lt=today,
             challenge__active_date__gte=year_start,
-            challenge__group=user.group,
         )
         user_attempted_responses_last_30_days = user_attempted_responses.filter(
             challenge__active_date__gte=last_30_days
