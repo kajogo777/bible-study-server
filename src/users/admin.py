@@ -130,8 +130,10 @@ class LimitModelFormset(forms.BaseInlineFormSet):
         super(LimitModelFormset, self).__init__(*args, **kwargs)
         _kwargs = {
             self.fk.name: kwargs["instance"],
-            "challenge__group": kwargs["instance"].group,
         }
+        if kwargs["instance"].id is not None:
+            _kwargs["challenge__group"] = kwargs["instance"].group
+
         self.queryset = (
             kwargs["queryset"]
             .filter(**_kwargs)
