@@ -128,7 +128,10 @@ class LimitModelFormset(forms.BaseInlineFormSet):
 
     def __init__(self, *args, **kwargs):
         super(LimitModelFormset, self).__init__(*args, **kwargs)
-        _kwargs = {self.fk.name: kwargs["instance"]}
+        _kwargs = {
+            self.fk.name: kwargs["instance"],
+            "challenge__group": kwargs["instance"].group,
+        }
         self.queryset = (
             kwargs["queryset"]
             .filter(**_kwargs)
@@ -141,16 +144,16 @@ class ResponseInline(admin.TabularInline):
     extra = 0
     min_num = 0
     formset = LimitModelFormset
-    readonly_fields = ("challenge",)
+    fields = ["challenge", "answer"]
 
-    # def formfield_for_foreignkey(self, db_field, request, **kwargs):
-    #     if db_field.name == "challenge":
-    #         # if request.user.service_group is not None:
-    #         #     kwargs["queryset"] = Challenge.objects.filter(
-    #         #         group=request.user.service_group)
-    #         if request._obj_ is not None:
-    #             kwargs["queryset"] = Challenge.objects.filter(group=request._obj_.group)
-    #     return super().formfield_for_foreignkey(db_field, request, **kwargs)
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "challenge":
+            # if request.user.service_group is not None:
+            #     kwargs["queryset"] = Challenge.objects.filter(
+            #         group=request.user.service_group)
+            if request._obj_ is not None:
+                kwargs["queryset"] = Challenge.objects.filter(group=request._obj_.group)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 def download_pdf(modeladmin, request, queryset):
