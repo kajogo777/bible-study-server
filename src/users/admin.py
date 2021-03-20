@@ -154,7 +154,8 @@ class ResponseInline(admin.TabularInline):
             #     kwargs["queryset"] = Challenge.objects.filter(
             #         group=request.user.service_group)
             if request._obj_ is not None:
-                kwargs["queryset"] = Challenge.objects.filter(group=request._obj_.group)
+                kwargs["queryset"] = Challenge.objects.filter(
+                    group=request._obj_.group)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
@@ -219,7 +220,8 @@ class RegularUserForm(forms.ModelForm):
             and self.user.service_class != self.cleaned_data["group_class"]
         ):
             raise forms.ValidationError(
-                "You can only add users to class {}".format(self.user.service_class)
+                "You can only add users to class {}".format(
+                    self.user.service_class)
             )
         return self.cleaned_data["group_class"]
 
@@ -359,7 +361,8 @@ class MonthFilter(admin.SimpleListFilter):
                 # ),
                 _percentage_solved=Case(
                     When(_total_challenges=0, then=0),
-                    default=(100.0 * F("_solved_count") / F("_total_challenges")),
+                    default=(100.0 * F("_solved_count") / \
+                             F("_total_challenges")),
                 ),
                 _total_score=Sum(
                     "response__challenge__reward_score",
@@ -383,6 +386,7 @@ class RegularUserAdmin(admin.ModelAdmin):
         "total_score",
         "date_of_birth",
         "gender",
+        "login_url"
     )
     list_filter = (
         GroupFilter,
@@ -390,6 +394,7 @@ class RegularUserAdmin(admin.ModelAdmin):
         MonthFilter,
         ReadingsFilter,
     )
+    readonly_fields = ('code', 'login_url',)
     search_fields = ("name",)
     inlines = [ResponseInline, TopicUserInline]
     actions = [download_pdf]
@@ -443,7 +448,8 @@ class RegularUserAdmin(admin.ModelAdmin):
             #     .values("_challenge_count")[:1],
             #     output_field=IntegerField(),
             # ),
-            _total_challenges=Value(get_days_since_year_start(), IntegerField()),
+            _total_challenges=Value(
+                get_days_since_year_start(), IntegerField()),
             _percentage_solved=Case(
                 When(_total_challenges=0, then=0),
                 default=(100.0 * F("_solved_count") / F("_total_challenges")),
@@ -458,6 +464,9 @@ class RegularUserAdmin(admin.ModelAdmin):
         )
 
         return qs
+
+    def login_url(self, obj):
+        return f"https://evangelion.stmary-rehab.com/deeplink/{obj.code}"
 
     def challenge_month(self, obj):
         return None

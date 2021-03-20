@@ -17,7 +17,7 @@ from django.contrib import admin
 from django.urls import include, path
 from rest_framework import routers
 from challenges.urls import router as challenges_router
-from users.urls import router as users_router
+from users.urls import router as users_router, urlpatterns as user_urls
 from topics.urls import router as topics_router,  topics_nested_router
 from posts.urls import router as posts_router
 
@@ -34,4 +34,4 @@ urlpatterns = [
     path('api/', include(topics_router.urls)),
     path('api/', include(topics_nested_router.urls)),
     path('explorer-view/', include('explorer.urls')),
-]
+] + user_urls

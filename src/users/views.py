@@ -1,3 +1,5 @@
+from django.shortcuts import redirect
+from django.http import HttpResponseRedirect
 from rest_framework import viewsets, serializers, mixins
 from django_filters import rest_framework as filters
 from rest_framework.permissions import IsAuthenticated
@@ -10,6 +12,8 @@ from datetime import timedelta
 from django.db.models import Sum
 from django.core.cache import cache
 from ch_app_server.utils import get_year_start, get_days_since_year_start
+from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
+from rest_framework.decorators import api_view, renderer_classes
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -97,7 +101,8 @@ class UserScoreViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         user_attempted_responses_last_30_days = user_attempted_responses.filter(
             challenge__active_date__gte=last_30_days
         )
-        user_correct_responses = user_attempted_responses.filter(answer__correct=True)
+        user_correct_responses = user_attempted_responses.filter(
+            answer__correct=True)
         user_correct_responses_last_30_days = user_correct_responses.filter(
             challenge__active_date__gte=last_30_days
         )
@@ -130,3 +135,15 @@ class UserScoreViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
                 "total_score_last_30_days": total_score_last_30_days or 0,
             }
         )
+
+
+# class CustomSchemeRedirect(HttpResponseRedirect):
+#     allowed_schemes = ['evangelion']
+
+HttpResponseRedirect.allowed_schemes.append('evangelion')
+
+
+@api_view(('GET',))
+def deeplink_helper(request, code):
+    HttpResponseRedirect.allowed_schemes.append('evangelion')
+    return HttpResponseRedirect(f'evangelion://evangelion.stmary-rehab.com/{code}')
