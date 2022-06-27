@@ -5,7 +5,7 @@ djangorestframework==3.9.4
 git+https://github.com/kajogo777/django-smart-selects.git@master
 django-jet==1.0.8
 django-filter==2.1.0
-reportlab==3.5.23
+reportlab==3.5.55
 psycopg2-binary==2.8.4
 gunicorn==20.0.4
 drf-nested-routers==0.91
