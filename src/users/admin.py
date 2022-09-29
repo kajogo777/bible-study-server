@@ -43,9 +43,10 @@ class AdminUserAdmin(UserAdmin):
         "is_staff",
         "is_superuser",
         "service_group",
+        "service_grade",
         "service_class",
     )
-    list_filter = ("service_group", "service_class")
+    list_filter = ("service_group", "service_grade", "service_class")
     add_fieldsets = (
         (
             None,
@@ -95,12 +96,6 @@ class AdminUserAdmin(UserAdmin):
         return form
 
 
-class ClassInline(admin.TabularInline):
-    model = Class
-    verbose_name = "Class"
-    verbose_name_plural = "Classes"
-
-
 class TopicGroupInline(admin.TabularInline):
     model = TopicGroup
     extra = 0
@@ -112,8 +107,13 @@ class TopicGroupInline(admin.TabularInline):
 class GroupAdmin(admin.ModelAdmin):
     list_display = ("name",)  # 'downloads')
 
-    inlines = [ClassInline, TopicGroupInline]
+    inlines = [TopicGroupInline]
 
+class ClassAdmin(admin.ModelAdmin):
+    list_display = ("name",)
+
+    class Meta: 
+        verbose_name_plural = "Classes"
 
 class TopicUserInline(admin.TabularInline):
     model = TopicUser
@@ -233,8 +233,6 @@ class ClassFilter(admin.SimpleListFilter):
     def lookups(self, request, model_admin):
         user = request.user
         qs = Class.objects.all()
-        if user.service_group is not None:
-            qs = qs.filter(group=user.service_group)
         if user.service_class is not None:
             qs = qs.filter(id=user.service_class.id)
         return ((obj.id, obj) for obj in qs)
@@ -379,6 +377,7 @@ class MonthFilter(admin.SimpleListFilter):
 class RegularUserAdmin(admin.ModelAdmin):
     list_display = (
         "name",
+        "grade",
         "group",
         "group_class",
         "solved_count",
@@ -389,6 +388,7 @@ class RegularUserAdmin(admin.ModelAdmin):
         "login_url"
     )
     list_filter = (
+        "grade",
         GroupFilter,
         ClassFilter,
         MonthFilter,
@@ -502,5 +502,6 @@ class RegularUserAdmin(admin.ModelAdmin):
 
 # Register your models here.
 admin.site.register(Group, GroupAdmin)
+admin.site.register(Class, ClassAdmin)
 admin.site.register(User, RegularUserAdmin)
 admin.site.register(AdminUser, AdminUserAdmin)

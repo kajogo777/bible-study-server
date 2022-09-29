@@ -19,19 +19,6 @@ class Group(models.Model):
 
 
 class Class(models.Model):
-    group = models.ForeignKey(
-        'users.Group', on_delete=models.PROTECT, blank=False, null=False)
-    grade = models.IntegerField(
-        choices=[
-            (1, 1),
-            (2, 2),
-            (3, 3),
-            (4, 4),
-            (5, 5),
-            (6, 6),
-        ],
-        blank=False, null=False
-    )
     name = models.CharField(
         max_length=30,
         default="",
@@ -39,19 +26,47 @@ class Class(models.Model):
     )
 
     def __str__(self):
-        return "{} {}".format(self.grade, self.name)
+        return self.name
 
 
 class AdminUser(AbstractUser):
+    PRIMARY_1 = 1
+    PRIMARY_2 = 2
+    PRIMARY_3 = 3
+    PRIMARY_4 = 4
+    PRIMARY_5 = 5
+    PRIMARY_6 = 6
+    PREPARATORY_1 = 7
+    PREPARATORY_2 = 8
+    PREPARATORY_3 = 9
+    SECONDARY_1 = 10
+    SECONDARY_2 = 11
+    SECONDARY_3 = 12
+    UNIVERSITY = 13
+    OTHER = 100
     service_group = models.ForeignKey(
         'users.Group', on_delete=models.PROTECT, blank=True, null=True, related_name='service_group')
-    service_class = ChainedForeignKey(
-        Class,
-        chained_field="service_group",
-        chained_model_field="group",
-        sort=True,
-        show_all=False,
-        on_delete=models.CASCADE, blank=True, null=True)
+    service_class = models.ForeignKey(
+        'users.Class', on_delete=models.PROTECT, blank=True, null=True, related_name='service_class')
+    service_grade = models.IntegerField(
+        choices=[
+            (OTHER, "Other"),
+            (PRIMARY_1, "Primary 1"),
+            (PRIMARY_2, "Primary 2"),
+            (PRIMARY_3, "Primary 3"),
+            (PRIMARY_4, "Primary 4"),
+            (PRIMARY_5, "Primary 5"),
+            (PRIMARY_6, "Primary 6"),
+            (PREPARATORY_1, "Preparatory 1"),
+            (PREPARATORY_2, "Preparatory 2"),
+            (PREPARATORY_3, "Preparatory 3"),
+            (SECONDARY_1, "Secondary 1"),
+            (SECONDARY_2, "Secondary 2"),
+            (SECONDARY_3, "Secondary 3"),
+            (UNIVERSITY, "University"),
+        ],
+        blank=True, null=True
+    )
 
     class Meta:
         verbose_name = 'Admin User'
@@ -59,15 +74,25 @@ class AdminUser(AbstractUser):
 
 
 class User(models.Model):
+    PRIMARY_1 = 1
+    PRIMARY_2 = 2
+    PRIMARY_3 = 3
+    PRIMARY_4 = 4
+    PRIMARY_5 = 5
+    PRIMARY_6 = 6
+    PREPARATORY_1 = 7
+    PREPARATORY_2 = 8
+    PREPARATORY_3 = 9
+    SECONDARY_1 = 10
+    SECONDARY_2 = 11
+    SECONDARY_3 = 12
+    UNIVERSITY = 13
+    OTHER = 100
+
     group = models.ForeignKey(
         'users.Group', on_delete=models.PROTECT, blank=False, null=False, related_name='user_group')
-    group_class = ChainedForeignKey(
-        Class,
-        chained_field="group",
-        chained_model_field="group",
-        sort=True,
-        show_all=False,
-        on_delete=models.CASCADE, blank=True, null=True)
+    group_class = models.ForeignKey(
+        'users.Class', on_delete=models.PROTECT, blank=True, null=True, related_name='user_class')
     name = models.CharField(max_length=50, blank=False, null=False)
     date_of_birth = models.DateField(
         auto_now=False, auto_now_add=False, blank=False, null=False)
@@ -80,6 +105,25 @@ class User(models.Model):
     )
     code = models.CharField(max_length=10, unique=True,
                             blank=False, null=False, default=generate_code)
+    grade = models.IntegerField(
+        choices=[
+            (OTHER, "Other"),
+            (PRIMARY_1, "Primary 1"),
+            (PRIMARY_2, "Primary 2"),
+            (PRIMARY_3, "Primary 3"),
+            (PRIMARY_4, "Primary 4"),
+            (PRIMARY_5, "Primary 5"),
+            (PRIMARY_6, "Primary 6"),
+            (PREPARATORY_1, "Preparatory 1"),
+            (PREPARATORY_2, "Preparatory 2"),
+            (PREPARATORY_3, "Preparatory 3"),
+            (SECONDARY_1, "Secondary 1"),
+            (SECONDARY_2, "Secondary 2"),
+            (SECONDARY_3, "Secondary 3"),
+            (UNIVERSITY, "University"),
+        ],
+        blank=False, null=True
+    )
 
     def is_authenticated(self):
         return True
