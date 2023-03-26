@@ -7,4 +7,4 @@ then
 fi
 
 echo "Loading dump $1"
-docker exec -it bible-study-server_app_1 python manage.py loaddata $1
+docker-compose exec app python manage.py loaddata -e contenttypes $1
