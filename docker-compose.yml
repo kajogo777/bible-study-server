@@ -20,6 +20,7 @@ services:
 
   app:
     build: .
+    entrypoint: "/docker-entrypoint.sh"
     restart: always
     environment:
       - POSTGRES_PASSWORD

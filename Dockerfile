@@ -30,4 +30,4 @@ COPY ./wait-for-it.sh /wait-for-it.sh
 COPY ./docker-entrypoint.sh /docker-entrypoint.sh
 
 USER ${APP_USER}:${APP_USER}
-CMD ["/docker-entrypoint.sh"]
+ENTRYPOINT ["/docker-entrypoint.sh"]
