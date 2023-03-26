@@ -4,6 +4,8 @@ volumes:
   pg-data:
   static-files:
   media-files:
+  caddy-data:
+
 
 services:
   db:
@@ -33,19 +35,19 @@ services:
       - media-files:/media
       - ./src:/code/
 
-  proxy:
-    image: nginx
+  proxyc:
+    image: caddy:2.6.4-alpine
     ports:
+      # - "8222:8222"
       - "80:80"
+      - "443:443"
+      - "443:443/udp"
     links:
       - app
     depends_on:
       - app
-    environment: 
-      - ALLOWED_HOSTS
     volumes:
-      - ./nginx_template.conf:/etc/nginx/nginx_template.conf:ro
-      - ./nginx_run.sh:/nginx_run.sh:ro
-      - static-files:/var/www/static:ro
-      - media-files:/var/www/media:ro
-    command: /bin/bash /nginx_run.sh
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - static-files:/static:ro
+      - media-files:/media:ro
+      - caddy-data:/data

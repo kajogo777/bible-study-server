@@ -1,0 +1,31 @@
+{
+    acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+}
+
+localhost:8222 {
+    handle_path /static/* {
+        root * /static
+	    file_server
+    }
+    handle_path /media/* {
+        root * /media
+	    file_server
+    }
+    handle {
+        reverse_proxy app:8000
+    }
+}
+
+evangelion.stmary-rehab.com {
+    handle_path /static/* {
+        root * /static
+	    file_server
+    }
+    handle_path /media/* {
+        root * /media
+	    file_server
+    }
+    handle {
+        reverse_proxy app:8000
+    }
+}
