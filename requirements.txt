@@ -1,4 +1,4 @@
-Django==2.2.13
+Django==2.2.28
 djangorestframework==3.9.4
 # django-smart-selects==1.5.4
 # git+https://github.com/digi604/django-smart-selects.git@js-unlinting-fixes
